@@ -9,12 +9,12 @@ declare -r GAME="@GAME@"
 # Avoid altering any of those later in the code since they may be readonly (IDLE_SERVER is an exception!)
 
 # You may use this script for any game server of your choice, just alter the config file
-[[ -n "${SERVER_ROOT}" ]]  && declare -r SERVER_ROOT=${SERVER_ROOT}   || SERVER_ROOT="@SERVER_ROOT@"
-[[ -n "${BACKUP_DEST}" ]]  && declare -r BACKUP_DEST=${BACKUP_DEST}   || BACKUP_DEST="@BACKUP_DEST@"
+[[ -n "${SERVER_ROOT}" ]] && declare -r SERVER_ROOT=${SERVER_ROOT} || SERVER_ROOT="@SERVER_ROOT@"
+[[ -n "${BACKUP_DEST}" ]] && declare -r BACKUP_DEST=${BACKUP_DEST} || BACKUP_DEST="@BACKUP_DEST@"
 [[ -n "${BACKUP_PATHS}" ]] && declare -r BACKUP_PATHS=${BACKUP_PATHS} || BACKUP_PATHS="@BACKUP_PATHS@"
 [[ -n "${BACKUP_FLAGS}" ]] && declare -r BACKUP_FLAGS=${BACKUP_FLAGS} || BACKUP_FLAGS="@BACKUP_FLAGS@"
 [[ -n "${KEEP_BACKUPS}" ]] && declare -r KEEP_BACKUPS=${KEEP_BACKUPS} || KEEP_BACKUPS="@KEEP_BACKUPS@"
-[[ -n "${GAME_USER}" ]]    && declare -r GAME_USER=${GAME_USER}       || GAME_USER="@GAME_USER@"
+[[ -n "${GAME_USER}" ]] && declare -r GAME_USER=${GAME_USER} || GAME_USER="@GAME_USER@"
 [[ -n "${MAIN_EXECUTABLE}" ]] && declare -r MAIN_EXECUTABLE=${MAIN_EXECUTABLE} || MAIN_EXECUTABLE="@MAIN_EXECUTABLE@"
 [[ -n "${SESSION_NAME}" ]] && declare -r SESSION_NAME=${SESSION_NAME} || SESSION_NAME="@SESSION_NAME@"
 
@@ -23,11 +23,11 @@ declare -r GAME="@GAME@"
 [[ -n "${SERVER_START_SUCCESS}" ]] && declare -r SERVER_START_SUCCESS=${SERVER_START_SUCCESS} || SERVER_START_SUCCESS="@SERVER_START_SUCCESS@"
 
 # System parameters for the control script
-[[ -n "${IDLE_SERVER}" ]]       && tmp_IDLE_SERVER=${IDLE_SERVER}   || IDLE_SERVER="@IDLE_SERVER@"
+[[ -n "${IDLE_SERVER}" ]] && tmp_IDLE_SERVER=${IDLE_SERVER} || IDLE_SERVER="@IDLE_SERVER@"
 [[ -n "${IDLE_SESSION_NAME}" ]] && declare -r IDLE_SESSION_NAME=${IDLE_SESSION_NAME} || IDLE_SESSION_NAME="@IDLE_SESSION_NAME@"
-[[ -n "${GAME_PORT}" ]]         && declare -r GAME_PORT=${GAME_PORT}       || GAME_PORT="@GAME_PORT@"
+[[ -n "${GAME_PORT}" ]] && declare -r GAME_PORT=${GAME_PORT} || GAME_PORT="@GAME_PORT@"
 [[ -n "${CHECK_PLAYER_TIME}" ]] && declare -r CHECK_PLAYER_TIME=${CHECK_PLAYER_TIME} || CHECK_PLAYER_TIME="@CHECK_PLAYER_TIME@"
-[[ -n "${IDLE_IF_TIME}" ]]      && declare -r IDLE_IF_TIME=${IDLE_IF_TIME} || IDLE_IF_TIME="@IDLE_IF_TIME@"
+[[ -n "${IDLE_IF_TIME}" ]] && declare -r IDLE_IF_TIME=${IDLE_IF_TIME} || IDLE_IF_TIME="@IDLE_IF_TIME@"
 
 # Additional configuration options which only few may need to alter
 [[ -n "${GAME_COMMAND_DUMP}" ]] && declare -r GAME_COMMAND_DUMP=${GAME_COMMAND_DUMP} || GAME_COMMAND_DUMP="@GAME_COMMAND_DUMP@"
@@ -40,7 +40,6 @@ source /etc/conf.d/"@GAME@" 2>/dev/null || >&2 echo "Could not source /etc/conf.
 # Preserve the content of IDLE_SERVER without making it readonly
 [[ -n ${tmp_IDLE_SERVER} ]] && IDLE_SERVER=${tmp_IDLE_SERVER}
 
-
 # Strictly disallow uninitialized Variables
 set -u
 # Exit if a single command breaks and its failure is not handled accordingly
@@ -49,14 +48,14 @@ set -e
 # Check whether sudo is needed at all
 if [[ "$(whoami)" == "${GAME_USER}" ]]; then
 	SUDO_CMD=()
-else
+	else
 	SUDO_CMD=("sudo" "-u" "${GAME_USER}")
 fi
 
 # Choose which flavor of netcat is to be used
-if command -v netcat &> /dev/null; then
+if command -v netcat &>/dev/null; then
 	NETCAT_CMD=("netcat")
-elif command -v ncat &> /dev/null; then
+elif command -v ncat &>/dev/null; then
 	NETCAT_CMD=("ncat")
 else
 	NETCAT_CMD=()
@@ -125,12 +124,12 @@ idle_server_daemon() {
 		if socket_has_session "${SESSION_NAME}"; then
 			# Game server is up and running
 			# Check for active player
-			if [[ -n "$(tmux -L "${SESSION_NAME}" list-clients -t "${SESSION_NAME}":0.0 2> /dev/null)" ]]; then
+			if [[ -n "$(tmux -L "${SESSION_NAME}" list-clients -t "${SESSION_NAME}":0.0 2>/dev/null)" ]]; then
 				# An administrator is connected to the console, pause player checking
 				echo "An admin is connected to the console. Pause player checking."
 			elif is_player_online; then
 				# No player was seen on the server through list
-				no_player=$(( no_player + CHECK_PLAYER_TIME ))
+				no_player=$((no_player + CHECK_PLAYER_TIME))
 				# Stop the game server if no player was active for at least ${IDLE_IF_TIME}
 				if [[ "${no_player}" -ge "${IDLE_IF_TIME}" ]]; then
 					IDLE_SERVER="false" ${INAME} stop
@@ -141,7 +140,7 @@ idle_server_daemon() {
 						sleep 0.1
 					done
 					# Reset timer and give the player 300 seconds to connect after pinging
-					no_player=$(( IDLE_IF_TIME - 300 ))
+					no_player=$((IDLE_IF_TIME - 300))
 					# Game server is down, listen on port ${GAME_PORT} for incoming connections
 					echo -n "Netcat: "
 					"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
@@ -154,7 +153,7 @@ idle_server_daemon() {
 			fi
 		else
 			# Reset timer and give the player 300 seconds to connect after pinging
-			no_player=$(( IDLE_IF_TIME - 300 ))
+			no_player=$((IDLE_IF_TIME - 300))
 			# Game server is down, listen on port ${GAME_PORT} for incoming connections
 			echo -n "Netcat: "
 			"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
@@ -181,7 +180,7 @@ server_start() {
 		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" wait-for -L "command_lock"
 		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" pipe-pane -t "${SESSION_NAME}":0.0 "cat > ${GAME_COMMAND_DUMP}"
 		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" send-keys -t "${SESSION_NAME}":0.0 "exec ${SERVER_START_CMD}" Enter
-		for ((i=1; i<=MAX_SERVER_START_TIME; i++)); do
+		for ((i = 1; i <= MAX_SERVER_START_TIME; i++)); do
 			sleep "${sleep_time:-0.1}"
 			if ! socket_session_is_alive "${SESSION_NAME}"; then
 				echo -e "\e[39;1m failed\e[0m\n"
@@ -267,15 +266,15 @@ server_stop() {
 			game_command save-all
 			echo -en "Server is going down in..."
 			for i in {1..10}; do
-				game_command say "down in... $(( 10 - i ))"
-				echo -n " $(( 10 - i ))"
+				game_command say "down in... $((10 - i))"
+				echo -n " $((10 - i))"
 				sleep 1
 			done
 			game_command stop
 		fi
 
 		# Finish as soon as the server has shut down completely
-		for ((i=1; i<=MAX_SERVER_STOP_TIME; i++)); do
+		for ((i = 1; i <= MAX_SERVER_STOP_TIME; i++)); do
 			if ! socket_has_session "${SESSION_NAME}"; then
 				"${SUDO_CMD[@]}" rm -f "${GAME_COMMAND_DUMP}"
 				echo -e "\e[39;1m done\e[0m"
@@ -312,7 +311,7 @@ server_status() {
 
 		# Calculating memory usage
 		for p in $("${SUDO_CMD[@]}" pgrep -f "${MAIN_EXECUTABLE}"); do
-			ps -p"${p}" -O rss | tail -n 1;
+			ps -p"${p}" -O rss | tail -n 1
 		done | awk '{ count ++; sum += $2 }; END {count --; print "Number of processes =", count, "(tmux +", count, "x server)"; print "Total memory usage =", sum/1024, "MB" ;};'
 	else
 		echo -e "Status:\e[39;1m stopped\e[0m"
@@ -332,33 +331,33 @@ server_restart() {
 # Backup the directories specified in BACKUP_PATHS
 backup_files() {
 	# Check for the availability of the tar binaries
-	if ! command -v tar &> /dev/null; then
-		>&2 echo "The tar binaries are needed for a backup."
+	if ! command -v rsync &>/dev/null; then
+		>&2 echo "The rsync binaries are needed for a backup."
 		exit 11
 	fi
+	bname="$(date +%Y_%m_%d_%H.%M.%S)"
 
 	echo "Starting backup..."
-	fname="$(date +%Y_%m_%d_%H.%M.%S).tar.gz"
 	"${SUDO_CMD[@]}" mkdir -p "${BACKUP_DEST}"
 	if socket_has_session "${SESSION_NAME}"; then
 		game_command save-off
 		game_command save-all
 		sleep "${sleep_time:-0.3}"
 		sync && wait
-		"${SUDO_CMD[@]}" tar -C "${SERVER_ROOT}" -cf "${BACKUP_DEST}/${fname}" ${BACKUP_PATHS} --totals ${BACKUP_FLAGS} 2>&1 | grep -v "tar: Removing leading "
+		"${SUDO_CMD[@]}" rsync -avz --link-dest="{$BACKUP_DEST/latest}" "${BACKUP_PATHS}" "${BACKUP_DEST/${bname}/}"
 		game_command save-on
 	else
-		"${SUDO_CMD[@]}" tar -C "${SERVER_ROOT}" -cf "${BACKUP_DEST}/${fname}" ${BACKUP_PATHS} --totals ${BACKUP_FLAGS} 2>&1 | grep -v "tar: Removing leading "
+		"${SUDO_CMD[@]}" rsync -avz --link-dest="${BACKUP_DEST/latest/}" "${BACKUP_PATHS}" "${BACKUP_DEST/${bname}/}"
 	fi
 	echo -e "\e[39;1mbackup completed\e[0m\n"
 
 	echo -n "Only keeping the last ${KEEP_BACKUPS} backups and removing the other ones..."
 	backup_count=$(for f in "${BACKUP_DEST}"/[0-9_.]*; do echo "${f}"; done | wc -l)
-	if [[ $(( backup_count - KEEP_BACKUPS )) -gt 0 ]]; then
-		for old_backup in $(for f in "${BACKUP_DEST}"/[0-9_.]*; do echo "${f}"; done | head -n"$(( backup_count - KEEP_BACKUPS ))"); do
-			"${SUDO_CMD[@]}" rm "${old_backup}";
+	if [[ $((backup_count - KEEP_BACKUPS)) -gt 0 ]]; then
+		for old_backup in $(for f in "${BACKUP_DEST}"/[0-9_.]*; do echo "${f}"; done | head -n"$((backup_count - KEEP_BACKUPS))"); do
+			"${SUDO_CMD[@]}" rm "${old_backup}"
 		done
-		echo -e "\e[39;1m done\e[0m ($(( backup_count - KEEP_BACKUPS)) backup(s) pruned)"
+		echo -e "\e[39;1m done\e[0m ($((backup_count - KEEP_BACKUPS)) backup(s) pruned)"
 	else
 		echo -e "\e[39;1m done\e[0m (no backups pruned)"
 	fi
@@ -367,7 +366,7 @@ backup_files() {
 # Restore backup
 backup_restore() {
 	# Check for the availability of the tar binaries
-	if ! command -v tar &> /dev/null; then
+	if ! command -v tar &>/dev/null; then
 		>&2 echo "The tar binaries are needed for a backup."
 		exit 11
 	fi
@@ -384,7 +383,7 @@ backup_restore() {
 		i=1
 		for f in "${BACKUP_DEST}"/[0-9_.]*; do
 			echo -e "    \e[39;1m$i)\e[0m\t$f"
-			i=$(( i + 1 ))
+			i=$((i + 1))
 		done
 		echo -en "Restore backup number: "
 
@@ -396,7 +395,7 @@ backup_restore() {
 			n=1
 			for f in "${BACKUP_DEST}"/[0-9_.]*; do
 				[[ ${n} -eq $user_choice ]] && fname="$f"
-				n=$(( n + 1 ))
+				n=$((n + 1))
 			done
 			if [[ -z $fname ]]; then
 				>&2 echo -e "\e[39;1mFailed\e[0m to interpret your input. Please enter the digit of the presented options."
@@ -458,19 +457,19 @@ server_console() {
 # Check if there is a session available
 socket_has_session() {
 	if [[ "$(whoami)" != "${GAME_USER}" ]]; then
-		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" has-session -t "${1}":0.0 2> /dev/null
+		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" has-session -t "${1}":0.0 2>/dev/null
 		return $?
 	fi
-	tmux -L "${SESSION_NAME}" has-session -t "${1}":0.0 2> /dev/null
+	tmux -L "${SESSION_NAME}" has-session -t "${1}":0.0 2>/dev/null
 	return $?
 }
 
 socket_session_is_alive() {
 	if socket_has_session "${1}"; then
 		if [[ "$(whoami)" != "${GAME_USER}" ]]; then
-			return "$("${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" list-panes -t "${1}":0.0 -F '#{pane_dead}' 2> /dev/null)"
+			return "$("${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" list-panes -t "${1}":0.0 -F '#{pane_dead}' 2>/dev/null)"
 		fi
-		return "$(tmux -L "${SESSION_NAME}" list-panes -t "${1}":0.0 -F '#{pane_dead}' 2> /dev/null)"
+		return "$(tmux -L "${SESSION_NAME}" list-panes -t "${1}":0.0 -F '#{pane_dead}' 2>/dev/null)"
 	else
 		return 1
 	fi
@@ -479,67 +478,62 @@ socket_session_is_alive() {
 # Help function, no arguments required
 help() {
 	cat <<-EOF
-	This script was designed to easily control any ${GAME} server. Almost any parameter for a given
-	${GAME} server derivative can be changed by editing the variables in the configuration file.
+		This script was designed to easily control any ${GAME} server. Almost any parameter for a given
+		${GAME} server derivative can be changed by editing the variables in the configuration file.
 
-	Usage: ${INAME} {start|stop|restart|status|backup|restore|command <command>|console}
-	    start                Start the ${GAME} server
-	    stop                 Stop the ${GAME} server
-	    restart              Restart the ${GAME} server
-	    status               Print some status information
-	    backup               Backup the world data
-	    restore [filename]   Restore the world data from a backup
-	    command <command>    Run the given command at the ${GAME} server console
-	    console              Enter the server console through a tmux session
+		Usage: ${INAME} {start|stop|restart|status|backup|restore|command <command>|console}
+		    start                Start the ${GAME} server
+		    stop                 Stop the ${GAME} server
+		    restart              Restart the ${GAME} server
+		    status               Print some status information
+		    backup               Backup the world data
+		    restore [filename]   Restore the world data from a backup
+		    command <command>    Run the given command at the ${GAME} server console
+		    console              Enter the server console through a tmux session
 
-	Copyright (c) Gordian Edenhofer <gordian.edenhofer@gmail.com>
+		Copyright (c) Gordian Edenhofer <gordian.edenhofer@gmail.com>
 	EOF
 }
 
 case "${1:-}" in
-	start)
+start)
 	server_start
 	;;
 
-	stop)
+stop)
 	server_stop
 	;;
 
-	status)
+status)
 	server_status
 	;;
 
-	restart)
+restart)
 	server_restart
 	;;
 
-	console)
+console)
 	server_console
 	;;
 
-	command)
+command)
 	server_command "${@:2}"
 	;;
 
-	backup)
+backup)
 	backup_files
 	;;
 
-	restore)
+restore)
 	backup_restore "${@:2}"
 	;;
 
-	idle_server_daemon)
+idle_server_daemon)
 	# This shall be a hidden function which should only be invoked internally
 	idle_server_daemon
 	;;
 
-	-h|--help)
-	help
-	exit 0
-	;;
-
-	*)
+*)
 	help
 	exit 1
 	;;
