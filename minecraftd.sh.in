@@ -323,16 +323,6 @@ server_status() {
 	fi
 }
 
-# Restart the complete server by shutting it down and starting it again
-server_restart() {
-	if socket_has_session "${SESSION_NAME}"; then
-		server_stop
-		server_start
-	else
-		server_start
-	fi
-}
-
 # Backup the directories specified in BACKUP_PATHS
 backup_files() {
 	# Check for the availability of the rsync binaries
@@ -498,7 +488,6 @@ help() {
 		Usage: ${INAME} {start|stop|restart|status|backup|restore|command <command>|console}
 		    start                Start the ${GAME} server
 		    stop                 Stop the ${GAME} server
-		    restart              Restart the ${GAME} server
 		    status               Print some status information
 		    backup               Backup the world data
 		    restore [filename]   Restore the world data from a backup
