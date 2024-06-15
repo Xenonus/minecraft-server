@@ -20,7 +20,7 @@ While the server is offline, the script can listen on the minecraft port for inc
 * tmux -- communication with server
 
 * netcat -- listen on the minecraft port for incoming connections while the server is down (optional)
-* tar -- take world backups (optional)
+* rsync -- take world backups (optional)
 
 ### Build
 
