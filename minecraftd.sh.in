@@ -62,7 +62,7 @@ fi
 
 # Check for tmux binary
 if ! command -v tmux &>/dev/null; then
-	>&2 echo "The tmux binaries are needed for a backup."
+	>&2 echo "The tmux binaries are needed for the script to work."
 	exit 23
 fi
 
