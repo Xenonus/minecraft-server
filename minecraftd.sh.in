@@ -239,7 +239,7 @@ server_start() {
 # Stop the server gracefully by saving everything prior and warning the users
 server_stop() {
 	# Quit the idle daemon
-	if [[ "${IDLE_SERVER,,}" == "true" ]]; then
+	if [[ "${IDLE_SERVER}" == "true" ]]; then
 		# Check for the availability of the netcat (nc) binaries
 		if [[ -z "${NETCAT_CMD[*]}" ]]; then
 			>&2 echo "The netcat binaries are needed for suspending an idle server."
