@@ -18,10 +18,8 @@ While the server is offline, the script can listen on the minecraft port for inc
 * sed
 * sudo -- privilege separation
 * tmux -- communication with server
-
 * netcat -- listen on the minecraft port for incoming connections while the server is down (optional)
 * rsync -- take world backups (optional)
-
 ### Build
 
 ```
@@ -65,7 +63,7 @@ Adjust the configuration file under /etc/conf.d/minecraft to your liking.
 
 ### Server does not start
 
-For the server to start you have to accept the EULA in /srv/minecraft/eula.txt !
+For the server to start you have to accept the EULA in /srv/minecraft/eula.txt!
 The EULA file is generated after the first server start.
 
 ## License

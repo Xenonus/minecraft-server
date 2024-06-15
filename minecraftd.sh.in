@@ -60,7 +60,7 @@ else
 	NETCAT_CMD=()
 fi
 
-# Check for tmux binary
+# Check if tmux binary exists
 if ! command -v tmux &>/dev/null; then
 	>&2 echo "The tmux binaries are needed for the script to work."
 	exit 23
@@ -209,7 +209,7 @@ server_start() {
 		"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" wait-for -U "command_lock"
 	fi
 
-	if [[ "${IDLE_SERVER,,}" == "true" ]]; then
+	if [[ "${IDLE_SERVER}" == "true" ]]; then
 		# Check for the availability of the netcat (nc) binaries
 		if [[ -z "${NETCAT_CMD[*]}" ]]; then
 			>&2 echo "The netcat binaries are needed for suspending an idle server."
@@ -282,10 +282,10 @@ server_stop() {
 		for ((i = 1; i <= MAX_SERVER_STOP_TIME; i++)); do
 			if ! socket_has_session "${SESSION_NAME}"; then
 				"${SUDO_CMD[@]}" rm -f "${GAME_COMMAND_DUMP}"
-				echo -e "\e[39;1m done\e[0m"
+				echo -e "\e[39;1m Done\e[0m"
 				break
 			fi
-			[[ $i -eq ${MAX_SERVER_STOP_TIME} ]] && echo -e "\e[39;1m timed out\e[0m"
+			[[ $i -eq ${MAX_SERVER_STOP_TIME} ]] && echo -e "\e[39;1m Timed out\e[0m"
 			sleep 0.1
 		done
 	else
@@ -340,27 +340,27 @@ backup_files() {
 		>&2 echo "The rsync binaries are needed for a backup."
 		exit 11
 	fi
-	bname="$(date +%Y_%m_%d_%H.%M.%S)"
+	fname="$(date +%Y_%m_%d_%H.%M.%S)"
 	IFS=" " read -ra backup_path <<<"${BACKUP_PATHS}"
 
 	echo "Starting backup..."
 	"${SUDO_CMD[@]}" mkdir -p "${BACKUP_DEST}"
 	"${SUDO_CMD[@]}" mkdir -p "${BACKUP_DEST}"/latest
-	"${SUDO_CMD[@]}" mkdir -p "${BACKUP_DEST}"/"${bname}"
+	"${SUDO_CMD[@]}" mkdir -p "${BACKUP_DEST}"/"${fname}"
 	if socket_has_session "${SESSION_NAME}"; then
 		game_command save-off
 		game_command save-all
 		sleep "${sleep_time:-0.3}"
 		sync && wait
 		for i in "${backup_path[@]}"; do
-			"${SUDO_CMD[@]}" rsync -Pa --link-dest="${BACKUP_DEST}"/latest "${SERVER_ROOT}"/"${i}" "${BACKUP_DEST}"/"${bname}"
-			"${SUDO_CMD[@]}" ln -sfn "${BACKUP_DEST}"/"${bname}"/"${i}" "${BACKUP_DEST}"/latest
+			"${SUDO_CMD[@]}" rsync -Pa --link-dest="${BACKUP_DEST}"/latest "${SERVER_ROOT}"/"${i}" "${BACKUP_DEST}"/"${fname}"
+			"${SUDO_CMD[@]}" ln -sfn "${BACKUP_DEST}"/"${fname}"/"${i}" "${BACKUP_DEST}"/latest
 		done
 		game_command save-on
 	else
 		for i in "${backup_path[@]}"; do
-			"${SUDO_CMD[@]}" rsync -Pa --link-dest="${BACKUP_DEST}"/latest "${SERVER_ROOT}"/"${i}" "${BACKUP_DEST}"/"${bname}"
-			"${SUDO_CMD[@]}" ln -sfn "${BACKUP_DEST}"/"${bname}"/"${i}" "${BACKUP_DEST}"/latest
+			"${SUDO_CMD[@]}" rsync -Pa --link-dest="${BACKUP_DEST}"/latest "${SERVER_ROOT}"/"${i}" "${BACKUP_DEST}"/"${fname}"
+			"${SUDO_CMD[@]}" ln -sfn "${BACKUP_DEST}"/"${fname}"/"${i}" "${BACKUP_DEST}"/latest
 		done
 	fi
 	echo -e "\e[39;1mBackup completed\e[0m\n"
@@ -408,10 +408,10 @@ backup_restore() {
 		if [[ $user_choice =~ ^-?[0-9]+$ ]]; then
 			n=1
 			for f in "${BACKUP_DEST}"/[0-9_.]*; do
-				[[ ${n} -eq $user_choice ]] && bname="$f"
+				[[ ${n} -eq $user_choice ]] && fname="$f"
 				n=$((n + 1))
 			done
-			if [[ -z $bname ]]; then
+			if [[ -z $fname ]]; then
 				>&2 echo -e "\e[39;1mFailed\e[0m to interpret your input. Please enter the digit of the presented options."
 				exit 5
 			fi
@@ -422,10 +422,10 @@ backup_restore() {
 	elif [[ $# -eq 1 ]]; then
 		# Check for the existance of the specified file
 		if [[ -f "$1" ]]; then
-			bname="$1"
+			fname="$1"
 		else
 			if [[ -f "${BACKUP_DEST}"/"$1" ]]; then
-				bname="${BACKUP_DEST}"/"$1"
+				fname="${BACKUP_DEST}"/"$1"
 			else
 				>&2 echo -e "Sorry, but '$1', is \e[39;1mnot a valid file\e[0m, neither in your current directory nor in the backup folder."
 				exit 4
@@ -438,7 +438,7 @@ backup_restore() {
 	fi
 
 	echo "Restoring backup..."
-	if "${SUDO_CMD[@]}" rsync -Pa --delete "${bname}"/* "${SERVER_ROOT}" 2>&1; then
+	if "${SUDO_CMD[@]}" rsync -Pa --delete "${fname}"/* "${SERVER_ROOT}" 2>&1; then
 		echo -e "\e[39;1mRestoration completed\e[0m"
 	else
 		echo -e "\e[39;1mFailed to restore backup.\e[0m"
